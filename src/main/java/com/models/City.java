@@ -28,7 +28,7 @@ public class City {
 	private String cityName;
 	private String cityDescription;
 	
-	@JoinColumn
+	@JoinColumn(name = "state_id")
 	@ManyToOne
 	private State state;
 	
