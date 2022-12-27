@@ -5,8 +5,7 @@
  */
 package com.restcontrollers;
 
-import java.util.Map;
-
+import java.util.List;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -14,14 +13,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.models.State;
+import com.models.City;
 
 /**
  * @author Sam Liew 27 Dec 2022 11:13:11 AM
@@ -29,51 +27,61 @@ import com.models.State;
  */
 @RestController
 @CrossOrigin
-@RequestMapping("/state")
-@SuppressWarnings({"unchecked", "rawtypes", "serial"})
-public class StateController 
-{
+@RequestMapping("/city")
+@SuppressWarnings({ "unchecked", "rawtypes", "serial" })
+public class CityController {
 	@Autowired
 	private SessionFactory sessionFactory;
-	
-	@GetMapping("{stateId}")
-	public ResponseEntity getState(@PathVariable int stateId) {
-		
-		try (Session session = sessionFactory.openSession())
-		{
-			State state = session.get(State.class, stateId);
-			
-			if (state == null)
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("State not found");
-			
-			return ResponseEntity.ok(state);
-			
+
+	@GetMapping("{cityId}")
+	public ResponseEntity getCity(@PathVariable int cityId) {
+
+		try (Session session = sessionFactory.openSession()) {
+			City city = session.get(City.class, cityId);
+
+			if (city == null)
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("City not found");
+
+			return ResponseEntity.ok(city);
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
+
+		return ResponseEntity.internalServerError().build();
+	}
+
+	@GetMapping("state/{stateId}")
+	public ResponseEntity getCityByState(@PathVariable int stateId) {
+
+		try (Session session = sessionFactory.openSession()) {
+			String query = "FROM City WHERE state.stateId = :stateId";
+
+			List<City> cities = session.createQuery(query).setParameter("stateId", stateId).getResultList();
+
+			return ResponseEntity.ok(cities);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return ResponseEntity.internalServerError().build();
 	}
 	
-	@PostMapping("edit")
-	public ResponseEntity editState(@RequestBody Map body)
+	@DeleteMapping("delete/{cityId}")
+	public ResponseEntity deleteState(@PathVariable int cityId)
 	{
-		int stateId = (int) body.get("stateId");
-		String desc = (String) body.get("stateDescription");
-		
 		try (Session session = sessionFactory.openSession())
 		{
-			State state = session.get(State.class, stateId);
+			City city = session.get(City.class, cityId);
 			
-			if (state == null)
-				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("State not found");
-			
-			state.setStateDescription(desc);
+			if (city == null)
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("City not found");
 			
 			Transaction transaction = session.beginTransaction();
 			try 
 			{	
-				session.saveOrUpdate(state);
+				session.delete(city);
 				transaction.commit();
 				
 				return ResponseEntity.ok(null);
@@ -89,10 +97,4 @@ public class StateController
 		
 		return ResponseEntity.internalServerError().build();
 	}
-	
-	
-	
-	
-	
 }
-
